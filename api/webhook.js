@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     // ----------------------------
     // SEND TO GOOGLE APPS SCRIPT
     // ----------------------------
-    await fetch("YOUR_GOOGLE_APPS_SCRIPT_WEBAPP_URL", {
+    await fetch("https://script.google.com/macros/s/AKfycbyzMghOaW_Vl59pvDBdz2bqsb4bWb3uADRwe5gL8-5Kl4om1jcHNMgj7wlTvsHkvluttQ/exec", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
