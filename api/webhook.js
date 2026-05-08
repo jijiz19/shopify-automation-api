@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     console.log("📦 PAYLOAD READY:", payload);
 
     // 1. Send data to Google Sheets
-    await fetch("https://script.google.com/macros/s/AKfycbw7KN0G2Ja5w-lWEV3bl0BIHLhaWjOI9xwn6ZyvkrNcr9GC8llOsoJ8pMpjUWjNj3vjGA/exec", {
+    await fetch("https://script.google.com/macros/s/AKfycbzK7KJVHLyIHG5qSKX3fwTTItFhEJJf8vR3CZNNZe9b99fFk0xoo_AHj0tostxkqPlU/exec", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
