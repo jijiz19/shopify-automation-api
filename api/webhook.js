@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     console.log("📦 Shopify Order Received:", order);
 
     // ----------------------------
-    // SAFE DATA EXTRACTION
+    // FORMAT DATA (MATCH GOOGLE SHEETS)
     // ----------------------------
     const payload = {
       order_id: order.id || "",
@@ -15,17 +15,15 @@ export default async function handler(req, res) {
           ? `${order.customer.first_name} ${order.customer.last_name || ""}`
           : order.billing_address?.name || "Guest",
 
-      email:
+      email_address:
         order.email ||
         order.contact_email ||
         order.customer?.email ||
         "",
 
-      total_price: order.total_price || "0.00",
+      total_amount: order.total_price || "0.00",
 
-      items: (order.line_items || [])
-        .map(item => item.title)
-        .join(", ")
+      financial_status: order.financial_status || "unknown"
     };
 
     console.log("📊 Formatted Payload:", payload);
@@ -46,7 +44,7 @@ export default async function handler(req, res) {
     // ----------------------------
     // 2. SEND EMAIL (RESEND)
     // ----------------------------
-    if (payload.email) {
+    if (payload.email_address) {
       await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -55,22 +53,22 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           from: "Shop Orders <onboarding@resend.dev>",
-          to: payload.email,
+          to: payload.email_address,
           subject: `Order Confirmation #${payload.order_id}`,
           html: `
             <h2>Thank you for your order!</h2>
             <p><b>Order ID:</b> ${payload.order_id}</p>
-            <p><b>Total:</b> ₱${payload.total_price}</p>
-            <p><b>Items:</b> ${payload.items}</p>
+            <p><b>Total Amount:</b> ₱${payload.total_amount}</p>
+            <p><b>Financial Status:</b> ${payload.financial_status}</p>
             <br/>
-            <p>We will process your order soon.</p>
+            <p>We are processing your order now.</p>
           `
         })
       });
 
       console.log("📧 Email sent");
     } else {
-      console.log("⚠️ No email found, skipping email send");
+      console.log("⚠️ No email found, skipping email");
     }
 
     // ----------------------------
