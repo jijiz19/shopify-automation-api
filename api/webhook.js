@@ -2,49 +2,53 @@ export default async function handler(req, res) {
   try {
     const order = req.body;
 
-    console.log("🔥 ORDER RECEIVED:", JSON.stringify(order, null, 2));
+    console.log("🔥 RAW ORDER:", JSON.stringify(order, null, 2));
 
-    // -------------------------
-    // CLEAN EXTRACTION (BASED ON YOUR REAL PAYLOAD)
-    // -------------------------
+    // ----------------------------
+    // FINAL MATCHED PAYLOAD (BASED ON YOUR REAL SHOPIFY DATA)
+    // ----------------------------
     const payload = {
-      order_id: order.id,
+      order_id: order?.id || "",
 
       customer_name:
-        order.customer?.first_name && order.customer?.last_name
-          ? `${order.customer.first_name} ${order.customer.last_name}`
+        order?.customer?.first_name
+          ? `${order.customer.first_name} ${order.customer.last_name || ""}`
           : "Guest",
 
-      email_address: order.email || "",
+      email_address: order?.email || "",
 
-      total_amount: order.total_price || "0.00",
+      total_amount: order?.total_price || "0.00",
 
-      financial_status: order.financial_status || "unknown"
+      financial_status: order?.financial_status || "unknown"
     };
 
-    console.log("📊 FINAL PAYLOAD:", payload);
+    console.log("📦 FINAL PAYLOAD:", payload);
 
-    // -------------------------
-    // GOOGLE SHEETS
-    // -------------------------
-    await fetch("https://script.google.com/macros/s/AKfycbyzMghOaW_Vl59pvDBdz2bqsb4bWb3uADRwe5gL8-5Kl4om1jcHNMgj7wlTvsHkvluttQ/exec", {
+    // ----------------------------
+    // SEND TO GOOGLE APPS SCRIPT
+    // ----------------------------
+    await fetch("YOUR_GOOGLE_APPS_SCRIPT_WEBAPP_URL", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(payload)
     });
 
-    // -------------------------
-    // EMAIL (RESEND)
-    // -------------------------
+    console.log("✅ Sent to Google Sheets");
+
+    // ----------------------------
+    // SEND EMAIL (RESEND)
+    // ----------------------------
     if (payload.email_address) {
-      await fetch("https://api.resend.com/emails", {
+      const emailResponse = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          from: "Shop Orders <onboarding@resend.dev>",
+          from: "onboarding@resend.dev",
           to: payload.email_address,
           subject: `Order Confirmation #${payload.order_id}`,
           html: `
@@ -56,7 +60,9 @@ export default async function handler(req, res) {
         })
       });
 
-      console.log("📧 Email sent");
+      console.log("📧 Email response:", await emailResponse.text());
+    } else {
+      console.log("⚠️ No email found, skipping email");
     }
 
     return res.status(200).json({ success: true });
