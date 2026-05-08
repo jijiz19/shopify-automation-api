@@ -2,34 +2,40 @@ export default async function handler(req, res) {
   try {
     const order = req.body;
 
-    console.log("📦 Shopify Order Received:", order);
+    console.log("📦 Shopify Order Received:", JSON.stringify(order, null, 2));
 
     // ----------------------------
-    // FORMAT DATA (MATCH GOOGLE SHEETS)
+    // SAFE + COMPLETE DATA EXTRACTION
     // ----------------------------
     const payload = {
-      order_id: order.id || "",
+      order_id: order?.id || "",
 
       customer_name:
-        order.customer?.first_name
-          ? `${order.customer.first_name} ${order.customer.last_name || ""}`
-          : order.billing_address?.name || "Guest",
+        order?.billing_address?.first_name
+          ? `${order.billing_address.first_name} ${order.billing_address.last_name || ""}`
+          : order?.customer?.first_name
+            ? `${order.customer.first_name} ${order.customer.last_name || ""}`
+            : order?.billing_address?.name || "Guest",
 
       email_address:
-        order.email ||
-        order.contact_email ||
-        order.customer?.email ||
+        order?.email ||
+        order?.contact_email ||
+        order?.billing_address?.email ||
+        order?.customer?.email ||
         "",
 
-      total_amount: order.total_price || "0.00",
+      total_amount:
+        order?.total_price ||
+        order?.total_price_set?.shop_money?.amount ||
+        "0.00",
 
-      financial_status: order.financial_status || "unknown"
+      financial_status: order?.financial_status || "unknown"
     };
 
-    console.log("📊 Formatted Payload:", payload);
+    console.log("📊 Payload Sent:", payload);
 
     // ----------------------------
-    // 1. SEND TO GOOGLE SHEETS
+    // SEND TO GOOGLE SHEETS
     // ----------------------------
     await fetch("https://script.google.com/macros/s/AKfycbyzMghOaW_Vl59pvDBdz2bqsb4bWb3uADRwe5gL8-5Kl4om1jcHNMgj7wlTvsHkvluttQ/exec", {
       method: "POST",
@@ -42,7 +48,7 @@ export default async function handler(req, res) {
     console.log("✅ Sent to Google Sheets");
 
     // ----------------------------
-    // 2. SEND EMAIL (RESEND)
+    // SEND EMAIL (RESEND)
     // ----------------------------
     if (payload.email_address) {
       await fetch("https://api.resend.com/emails", {
@@ -59,28 +65,25 @@ export default async function handler(req, res) {
             <h2>Thank you for your order!</h2>
             <p><b>Order ID:</b> ${payload.order_id}</p>
             <p><b>Total Amount:</b> ₱${payload.total_amount}</p>
-            <p><b>Financial Status:</b> ${payload.financial_status}</p>
+            <p><b>Status:</b> ${payload.financial_status}</p>
             <br/>
-            <p>We are processing your order now.</p>
+            <p>We are processing your order.</p>
           `
         })
       });
 
       console.log("📧 Email sent");
     } else {
-      console.log("⚠️ No email found, skipping email");
+      console.log("⚠️ No email found");
     }
 
-    // ----------------------------
-    // RESPONSE
-    // ----------------------------
     return res.status(200).json({
       success: true,
-      message: "Order processed successfully"
+      message: "Order processed"
     });
 
   } catch (error) {
-    console.error("❌ Webhook Error:", error);
+    console.error("❌ Error:", error);
 
     return res.status(500).json({
       success: false,
