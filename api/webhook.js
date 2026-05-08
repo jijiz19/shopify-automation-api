@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
     // ONLY SEND TO GOOGLE SHEETS
     // Google will handle the Email part internally
-    await fetch("https://script.google.com/macros/s/AKfycbzvrZhvSfW4EOlVbyV2NC4XCnBNXkS2lCn_sfEZ-iWtIRHkx4mF4htAXO1EAcgsqhkhqQ/exec", {
+    await fetch("https://script.google.com/macros/s/AKfycbxLODQr3-9CUoQ6RY7bJGehFpbCl_JxB2Ur9jbmiaKKBnfOS9LLxs5cSGsOECTwCOgvGQ/exec", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
